@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'; 
-import { Query, QueryConfig, QueryResult } from 'pg';
+import { QueryConfig, QueryResult } from 'pg';
 import format from 'pg-format';
 import { client } from '../database';
 import { DeveloperResult, newData } from '../interfaces/developers.interfaces'
@@ -377,7 +377,7 @@ const getProjects = async (req: Request, res: Response): Promise<Response> => {
             tech."name" AS "technologyName"
         FROM
             projects pr
-        JOIN
+        FULL JOIN
             projects_technologies prtech ON pr.id = prtech."projectID"
         FULL JOIN
             technologies tech ON tech.id = pr."developerID";
@@ -405,7 +405,7 @@ const getProjectId = async (req: Request, res: Response): Promise<Response> => {
             tech."name" AS "technologyName"
         FROM
             projects pr
-        JOIN
+        FULL JOIN
             projects_technologies prtech ON pr.id = prtech."projectID"
         FULL JOIN
             technologies tech ON tech.id = pr."developerID"
@@ -628,29 +628,42 @@ const deleteTechnology = async (req: Request, res: Response): Promise<Response> 
         })
     }
 
-    const queryString: string = `
+    let queryString: string = `
+        SELECT
+            * 
+        FROM
+            projects_technologies
+        WHERE
+            "projectID" = $1
+    `
+    let queryConfig: QueryConfig = {
+        text: queryString,
+        values: [id]
+    }
+    let queryResult: QueryResult = await client.query(queryConfig)
+    const techId = queryResult.rows[0].technologyID === null ? 'vazio' : parseInt(queryResult.rows[0].technologyID)
+
+    queryString = `
         DELETE FROM
             technologies tech
-        JOIN
-            projects pr ON pr.id = $1
         WHERE
-            tech.name = $2
+            tech.name = $1 AND tech.id = $2;
     `
-    const queryConfig: QueryConfig = {
+    queryConfig= {
         text: queryString,
-        values: [id, name]
+        values: [name, techId]
     }
-    console.log('x')
-    const queryResult: QueryResult = await client.query(queryConfig)
-    console.log(queryResult)
+    queryResult = await client.query(queryConfig)
 
+    if(queryResult.rowCount <= 0){
+        return res.status(404).json({
+            message: `Technology '${name}' not found on this Project.`
+        })
+    } 
+    
     return res.status(204).send()
 }
 
 export { createDeveloper, getDeveloper, getDeveloperId, createDeveloperInfo, updateDeveloper, deleteDeveloper, 
 updateDeveloperInfo, createProject, getProjects, getProjectId, updateProject, getDeveloperProjects, deleteProject,
 createTechnology, deleteTechnology }
-
-//Eu escrevi developerID na chave da tabela projects, então é necessário que escreva 'developerID' em vez de 'developerId' para 
-//que funcione nas requisições. E no projeto possui querys em maiúsculas e outras em minúsculas por causa do dbeaver que só 
-//consegui configurar depois para letra maiúscula.
