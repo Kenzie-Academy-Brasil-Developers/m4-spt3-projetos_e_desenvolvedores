@@ -173,3 +173,7 @@ ADD FOREIGN KEY
 -- FULL JOIN
 -- 	technologies tech ON tech.id = pr."developerID";
 
+-- DELETE FROM
+--     technologies tech
+-- WHERE
+--     tech.name = $1 AND tech.id = $2;
