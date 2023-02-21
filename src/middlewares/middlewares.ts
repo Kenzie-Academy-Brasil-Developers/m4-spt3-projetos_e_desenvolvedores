@@ -77,6 +77,7 @@ const ensureIdProjectExist = async (req: Request, res: Response, next: NextFunct
         }
     }
 
+    return next()
 }
 
 export { ensureIdExist, ensureIdProjectExist }

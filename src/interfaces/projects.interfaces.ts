@@ -15,5 +15,6 @@ interface iProject extends iProjectRequest{
 }
 
 type ProjectResult = QueryResult<iProject>
+type keysRequiredProjects= 'name' | 'description' | 'estimatedTime' | 'repository' | 'startDate' | 'developerID'
 
-export { iProjectRequest, iProject, ProjectResult }
+export { iProjectRequest, iProject, ProjectResult, keysRequiredProjects }
